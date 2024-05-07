@@ -1,13 +1,12 @@
 use std::process::Command;
 use std::io::{self, Write};
-use std::fs::File;
+use std::fs::OpenOptions;
 use std::fs;
 
 fn main() {
     // SSH connection details
     let username = "miner";
     let mut hostname = String::new();
-//    let command = "tail -n 1000 /var/log/messages.0"; // Command to execute on the SSH server
     let command = "cat /var/log/miner.log"; // Command to execute on the SSH server
 
     //read the host name
@@ -41,6 +40,7 @@ fn main() {
         println!("Error:\n{}", stderr);
     }
 
+    // Error messages to search for in the logs
     let fail_substrings: Vec<String> = vec![
                                             String::from("chain avg vol drop"),
                                             String::from("!!! reg crc error"),
@@ -49,6 +49,7 @@ fn main() {
 
     let log = fs::read_to_string("miner_log.txt").expect("Unable to read file");
 
+    //checks logs for errors
     if log.is_empty() {
         println!("no logs found\n")
     } else {
@@ -61,6 +62,11 @@ fn main() {
         }
     }
     
-    File::create("miner_log.txt").expect("Unable to open file");
+    //clears the log file for next use
+    let file = OpenOptions::new()
+        .write(true)
+        .open("miner_log.txt")
+        .expect("Unable to open file");
 
+    file.set_len(0).expect("Unable to truncate file");
 }
