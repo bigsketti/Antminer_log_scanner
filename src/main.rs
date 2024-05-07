@@ -47,9 +47,7 @@ fn main() {
             return;
         }
     }
-
-    use std::fs::File;
     
-    File::create("/path/to/file.txt").expect("Unable to open file");
+    File::create("\\miner_scan\\miner_log.txt").expect("Unable to open file");
 
 }
