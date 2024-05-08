@@ -21,15 +21,11 @@ fn main() {
 
     for ip_address in ip_addresses {
         println!("Attempting to connect to {}", ip_address);
-        if let Some(success) = try_credentials(&ip_address, &credentials, &fail_substrings) {
-            println!("Success for {}: {}", ip_address, success);
-        } else {
-            println!("All credentials failed for {}", ip_address);
-        }
+        try_credentials(&ip_address, &credentials, &fail_substrings);
     }
 }
 
-fn try_credentials(ip_address: &str, credentials: &Vec<(&str, &str)>, fail_substrings: &Vec<&str>) -> Option<String> {
+fn try_credentials(ip_address: &str, credentials: &Vec<(&str, &str)>, fail_substrings: &Vec<&str>) {
     for (username, password) in credentials {
         println!("Trying {}@{}", username, ip_address);
         let command = "cat /var/log/miner.log"; // Command to fetch logs
@@ -46,11 +42,15 @@ fn try_credentials(ip_address: &str, credentials: &Vec<(&str, &str)>, fail_subst
         match output {
             Ok(output) if output.status.success() => {
                 let stdout = String::from_utf8(output.stdout).expect("Invalid UTF-8 in stdout");
-                // Now check for errors in logs
+                // Save logs to a file named after the IP address
+                let file_name = format!("{}_log.txt", ip_address.replace(".", "_")); // replace dots with underscores for filename
+                fs::write(&file_name, &stdout).expect("Unable to write file");
+                println!("Logs saved to {}", file_name);
                 if log_contains_errors(&stdout, fail_substrings) {
-                    return Some(format!("Errors found in logs for {}: {}", ip_address, stdout));
+                    println!("Errors found in logs for {}", ip_address);
+                } else {
+                    println!("No errors found in logs for {}", ip_address);
                 }
-                return Some(format!("No errors in logs for {}", ip_address));
             },
             Ok(output) => {
                 let stderr = String::from_utf8(output.stderr).expect("Invalid UTF-8 in stderr");
@@ -59,7 +59,6 @@ fn try_credentials(ip_address: &str, credentials: &Vec<(&str, &str)>, fail_subst
             Err(e) => println!("Failed to connect to {}@{}: {}", username, ip_address, e),
         }
     }
-    None
 }
 
 fn log_contains_errors(logs: &str, fail_substrings: &Vec<&str>) -> bool {
@@ -71,10 +70,10 @@ fn read_ips_from_file(filename: &str) -> io::Result<Vec<String>> {
     let reader = BufReader::new(file);
     let mut ips = Vec::new();
     for line in reader.lines() {
-    let line = line?;
-    if !line.trim().is_empty() {
-        ips.push(line);
+        let line = line?;
+        if !line.trim().is_empty() {
+            ips.push(line);
+        }
     }
-}
-Ok(ips)
+    Ok(ips)
 }
