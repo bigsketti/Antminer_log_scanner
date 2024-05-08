@@ -12,6 +12,8 @@ fn main() {
         "chain avg vol drop",
         "!!! reg crc error",
         "fail to read pic",
+        "fail to write 1",
+        "fail to read 0:1",
     ];
 
     // Read IP addresses from file
@@ -22,3 +24,5 @@ fn main() {
         crate::iterate::try_credentials(&ip_address, &credentials, &fail_substrings);
     }
 }
+
+// Path: src/main.rs
